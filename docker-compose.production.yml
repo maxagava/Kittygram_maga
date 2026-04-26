@@ -1,3 +1,4 @@
+version: '3.9'
 
 volumes:
   pg_data:
@@ -14,22 +15,22 @@ services:
       - pg_data:/var/lib/postgresql/data
 
   backend:
-    build: ./backend
+    image: maxagava/kittygram_backend:latest
     container_name: backend
     env_file:
       - kitty.env
     volumes:
       - static:/backend_static
-      - media:/media
+      - media:/app/media
     depends_on:
       - postgres
 
   frontend:
-    build: ./frontend
+    image: maxagava/kittygram_frontend:latest
     container_name: frontend
-    command: cp -r /app/build/. /static/
+    command: cp -r /app/build/. /backend_static/
     volumes:
-      - static:/static
+      - static:/backend_static
 
   gateway:
     build: ./nginx
@@ -41,3 +42,4 @@ services:
       - media:/media
     depends_on:
       - backend
+      - frontend
