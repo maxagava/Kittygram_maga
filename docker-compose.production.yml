@@ -28,12 +28,13 @@ services:
   frontend:
     image: maxagava/kittygram_frontend:latest
     container_name: frontend
-    command: cp -r /app/build/. /backend_static/
+    env_file:
+      - kitty.env
     volumes:
-      - static:/backend_static
+      - static:/app/build/static
 
   gateway:
-    build: ./nginx
+    image: maxagava/kittygram_gateway:latest
     container_name: gateway
     ports:
       - "9000:80"
