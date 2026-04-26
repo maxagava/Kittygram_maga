@@ -7,22 +7,42 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Backend tests
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install backend dependencies
         run: |
-          docker compose -f tests/docker-compose.yml up --build backend-tests || true
+          python -m pip install --upgrade pip
+          pip install flake8==7.0.0
+          if [ -f backend/requirements.txt ]; then pip install -r backend/requirements.txt; fi
 
-  docker:
-    needs: test
+      - name: Run PEP8 check
+        continue-on-error: true
+        run: |
+          flake8 backend/
+
+      - name: Run backend tests
+        run: |
+          docker compose -f tests/docker-compose.yml up --build backend-tests --abort-on-container-exit
+          docker compose -f tests/docker-compose.yml down
+
+  build_and_push:
+    needs: tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Login DockerHub
         uses: docker/login-action@v3
@@ -52,7 +72,7 @@ jobs:
           tags: maxagava/kittygram_gateway:latest
 
   deploy:
-    needs: docker
+    needs: build_and_push
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to server via SSH
@@ -70,3 +90,24 @@ jobs:
             sleep 20
             docker compose -f docker-compose.production.yml exec -T backend python manage.py migrate
             docker compose -f docker-compose.production.yml exec -T backend python manage.py collectstatic --noinput
+
+      - name: Run post-deploy tests
+        run: |
+          pytest
+
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Send Telegram notification
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ✅ Kittygram deployed successfully!
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
