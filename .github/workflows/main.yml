@@ -9,6 +9,7 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,10 +19,10 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install backend dependencies
+      - name: Install backend and test dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8==7.0.0
+          pip install flake8==7.0.0 pytest requests pyyaml
           if [ -f backend/requirements.txt ]; then pip install -r backend/requirements.txt; fi
 
       - name: Run PEP8 check
@@ -29,14 +30,14 @@ jobs:
         run: |
           flake8 backend/
 
-      - name: Run backend tests
+      - name: Run repository tests
         run: |
-          docker compose -f tests/docker-compose.yml up --build backend-tests --abort-on-container-exit
-          docker compose -f tests/docker-compose.yml down
+          pytest tests/
 
   build_and_push:
     needs: tests
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -74,7 +75,21 @@ jobs:
   deploy:
     needs: build_and_push
     runs-on: ubuntu-latest
+
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install post-deploy test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest requests pyyaml
+
       - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -93,12 +108,13 @@ jobs:
 
       - name: Run post-deploy tests
         run: |
-          pytest
+          pytest tests/
 
   notify:
     needs: deploy
     runs-on: ubuntu-latest
     if: success()
+
     steps:
       - name: Send Telegram notification
         uses: appleboy/telegram-action@master
