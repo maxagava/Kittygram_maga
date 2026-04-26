@@ -8,7 +8,6 @@ on:
 
 jobs:
   test:
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -19,7 +18,6 @@ jobs:
           docker compose -f tests/docker-compose.yml up --build backend-tests || true
 
   docker:
-    if: github.event_name == 'push'
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -54,7 +52,7 @@ jobs:
           tags: maxagava/kittygram_gateway:latest
 
   deploy:
-    if: github.event_name == 'workflow_dispatch'
+    needs: docker
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to server via SSH
