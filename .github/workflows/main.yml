@@ -9,7 +9,6 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -37,7 +36,6 @@ jobs:
   build_and_push:
     needs: tests
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -75,7 +73,6 @@ jobs:
   deploy:
     needs: build_and_push
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -114,7 +111,6 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     if: success()
-
     steps:
       - name: Send Telegram notification
         uses: appleboy/telegram-action@master
@@ -126,4 +122,4 @@ jobs:
             Repository: ${{ github.repository }}
             Branch: ${{ github.ref_name }}
             Commit: ${{ github.sha }}
-            Author: ${{ github.actor }}
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
