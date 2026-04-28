@@ -98,6 +98,7 @@ jobs:
             git pull origin main
             docker compose -f docker-compose.production.yml pull
             docker compose -f docker-compose.production.yml down
+            docker run --rm -v kittygram_maga_static:/data alpine sh -c "chmod -R 777 /data"
             docker compose -f docker-compose.production.yml up -d
             sleep 20
             docker compose -f docker-compose.production.yml exec -T backend python manage.py migrate
