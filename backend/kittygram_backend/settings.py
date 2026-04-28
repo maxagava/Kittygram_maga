@@ -1,19 +1,17 @@
+STATIC_ROOT = '/backend_static/static'# Спасибо за замечания!
+
 import os
 from pathlib import Path
 
+from django.core.management.utils import get_random_secret_key
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-SECRET_KEY = os.getenv(
-    'SECRET_KEY',
-    'django-insecure-cg6*%6d51ef8f#4!r3*$vmxm4)abgjw8mo!4y-q*uq1!4$-89$'
-)
+SECRET_KEY = os.getenv('SECRET_KEY', get_random_secret_key())
 
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
-
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -28,7 +26,6 @@ INSTALLED_APPS = [
     'cats.apps.CatsConfig',
 ]
 
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -39,9 +36,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
 ROOT_URLCONF = 'kittygram_backend.urls'
-
 
 TEMPLATES = [
     {
@@ -59,9 +54,7 @@ TEMPLATES = [
     },
 ]
 
-
 WSGI_APPLICATION = 'kittygram_backend.wsgi.application'
-
 
 DATABASES = {
     'default': {
@@ -73,7 +66,6 @@ DATABASES = {
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -90,23 +82,20 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
+
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-
 STATIC_URL = '/static/'
-STATIC_ROOT = '/backend_static'
+STATIC_ROOT = '/backend_static/static'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/media'
 
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [

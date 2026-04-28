@@ -1,3 +1,2 @@
-repo_owner: maxagava
+repo_owner: ${{ secrets.REPO_OWNER }}
 kittygram_domain: http://81.26.183.183:9000
-dockerhub_username: maxagava

@@ -21,7 +21,7 @@ services:
       - kitty.env
     volumes:
       - static:/backend_static
-      - media:/app/media
+      - media:/media
     depends_on:
       - postgres
 

@@ -54,21 +54,21 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: maxagava/kittygram_backend:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/kittygram_backend:latest
 
       - name: Build and push frontend
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
           push: true
-          tags: maxagava/kittygram_frontend:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/kittygram_frontend:latest
 
       - name: Build and push gateway
         uses: docker/build-push-action@v6
         with:
           context: ./nginx
           push: true
-          tags: maxagava/kittygram_gateway:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/kittygram_gateway:latest
 
   deploy:
     needs: build_and_push
