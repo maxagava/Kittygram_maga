@@ -30,11 +30,18 @@ class AchievementSerializer(serializers.ModelSerializer):
 
 class Base64ImageField(serializers.ImageField):
     def to_internal_value(self, data):
+        print('IMAGE RAW TYPE:', type(data))
+        if isinstance(data, str):
+            print('IMAGE RAW START:', data[:80])
+
         if isinstance(data, str) and data.startswith('data:image'):
             format_data, imgstr = data.split(';base64,')
             ext = format_data.split('/')[-1]
             data = ContentFile(base64.b64decode(imgstr), name=f'temp.{ext}')
-        return super().to_internal_value(data)
+
+        result = super().to_internal_value(data)
+        print('IMAGE INTERNAL VALUE:', result)
+        return result
 
     def to_representation(self, value):
         if not value:
@@ -65,7 +72,12 @@ class CatSerializer(serializers.ModelSerializer):
     def get_age(self, obj):
         return dt.datetime.now().year - obj.birth_year
 
+    def to_internal_value(self, data):
+        print('REQUEST DATA IN SERIALIZER:', data)
+        return super().to_internal_value(data)
+
     def create(self, validated_data):
+        print('VALIDATED DATA IN CREATE:', validated_data)
         achievements = validated_data.pop('achievements', [])
         cat = Cat.objects.create(**validated_data)
 
@@ -75,9 +87,13 @@ class CatSerializer(serializers.ModelSerializer):
                 achievement=current_achievement,
                 cat=cat
             )
+
+        print('CREATED CAT IMAGE:', cat.image)
         return cat
 
     def update(self, instance, validated_data):
+        print('VALIDATED DATA IN UPDATE:', validated_data)
+
         instance.name = validated_data.get('name', instance.name)
         instance.color = validated_data.get('color', instance.color)
         instance.birth_year = validated_data.get('birth_year', instance.birth_year)
@@ -92,4 +108,5 @@ class CatSerializer(serializers.ModelSerializer):
             instance.achievements.set(achievements_list)
 
         instance.save()
+        print('UPDATED CAT IMAGE:', instance.image)
         return instance
