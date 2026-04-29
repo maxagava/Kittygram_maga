@@ -1,14 +1,9 @@
 import base64
-
+import datetime as dt
+import webcolors
 from django.core.files.base import ContentFile
 from rest_framework import serializers
-import webcolors
-
-
-import datetime as dt
-
 from .models import Achievement, AchievementCat, Cat
-
 
 class Hex2NameColor(serializers.Field):
     def to_representation(self, value):
@@ -20,7 +15,6 @@ class Hex2NameColor(serializers.Field):
             raise serializers.ValidationError('Для этого цвета нет имени')
         return data
 
-
 class AchievementSerializer(serializers.ModelSerializer):
     achievement_name = serializers.CharField(source='name')
 
@@ -28,24 +22,20 @@ class AchievementSerializer(serializers.ModelSerializer):
         model = Achievement
         fields = ('id', 'achievement_name')
 
-
 class Base64ImageField(serializers.ImageField):
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
             ext = format.split('/')[-1]
-
             data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-
         return super().to_internal_value(data)
-
 
 class CatSerializer(serializers.ModelSerializer):
     achievements = AchievementSerializer(required=False, many=True)
     color = Hex2NameColor()
     age = serializers.SerializerMethodField()
     image = Base64ImageField(required=False, allow_null=True)
-    
+
     class Meta:
         model = Cat
         fields = (
@@ -56,7 +46,14 @@ class CatSerializer(serializers.ModelSerializer):
 
     def get_age(self, obj):
         return dt.datetime.now().year - obj.birth_year
-    
+
+    def get_image(self, obj):
+        # Это гарантирует, что мы отдаем URL, 
+        # который будет резолвиться правильно относительно хоста
+        if obj.image:
+            return obj.image.url
+        return None
+
     def create(self, validated_data):
         if 'achievements' not in self.initial_data:
             cat = Cat.objects.create(**validated_data)
@@ -72,7 +69,7 @@ class CatSerializer(serializers.ModelSerializer):
                     achievement=current_achievement, cat=cat
                     )
             return cat
-    
+
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
         instance.color = validated_data.get('color', instance.color)
