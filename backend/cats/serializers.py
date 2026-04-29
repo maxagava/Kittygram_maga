@@ -36,13 +36,17 @@ class Base64ImageField(serializers.ImageField):
             data = ContentFile(base64.b64decode(imgstr), name=f'temp.{ext}')
         return super().to_internal_value(data)
 
+    def to_representation(self, value):
+        if not value:
+            return None
+        return value.url
+
 
 class CatSerializer(serializers.ModelSerializer):
     achievements = AchievementSerializer(required=False, many=True)
     color = Hex2NameColor()
     age = serializers.SerializerMethodField()
-    image = serializers.SerializerMethodField()
-    uploaded_image = Base64ImageField(write_only=True, required=False, allow_null=True)
+    image = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Cat
@@ -55,27 +59,15 @@ class CatSerializer(serializers.ModelSerializer):
             'owner',
             'age',
             'image',
-            'uploaded_image',
         )
         read_only_fields = ('owner',)
 
     def get_age(self, obj):
         return dt.datetime.now().year - obj.birth_year
 
-    def get_image(self, obj):
-        if obj.image:
-            return obj.image.url
-        return None
-
     def create(self, validated_data):
-        uploaded_image = validated_data.pop('uploaded_image', None)
         achievements = validated_data.pop('achievements', [])
-
         cat = Cat.objects.create(**validated_data)
-
-        if uploaded_image is not None:
-            cat.image = uploaded_image
-            cat.save()
 
         for achievement in achievements:
             current_achievement, _ = Achievement.objects.get_or_create(**achievement)
@@ -83,21 +75,16 @@ class CatSerializer(serializers.ModelSerializer):
                 achievement=current_achievement,
                 cat=cat
             )
-
         return cat
 
     def update(self, instance, validated_data):
-        uploaded_image = validated_data.pop('uploaded_image', None)
-        achievements_data = validated_data.pop('achievements', None)
-
         instance.name = validated_data.get('name', instance.name)
         instance.color = validated_data.get('color', instance.color)
         instance.birth_year = validated_data.get('birth_year', instance.birth_year)
+        instance.image = validated_data.get('image', instance.image)
 
-        if uploaded_image is not None:
-            instance.image = uploaded_image
-
-        if achievements_data is not None:
+        if 'achievements' in validated_data:
+            achievements_data = validated_data.pop('achievements')
             achievements_list = []
             for achievement in achievements_data:
                 current_achievement, _ = Achievement.objects.get_or_create(**achievement)
